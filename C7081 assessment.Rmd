@@ -1,0 +1,224 @@
+---
+Title: Assessment c7081; Who eats what we grow
+Author: "mayowa-Adebayo.R"
+Date: "2022-11-22"
+Output: EDA using logical regression
+output: word_document
+---
+
+## Header ####
+
+## Who: "Mayowa Adebayo"
+
+## What: "Assessment c7081; Who eats what we grow"
+
+## Last Edited: "2022-11-22"
+
+## What: "Exploratory Data Analysis using logical regresssion"
+
+---
+
+## Content ####
+       
+# 01.Background
+# 02.Methodology
+## i. Set working directory
+## ii. Load necessary library
+## iii. Read in dataset
+## iv. Cleanup/tidy dataset
+##  v. Analyse data using logical regression
+#  03. Result 
+#  04. Conclusion
+#  05. References
+
+---
+
+## 01 Background
+                                
+             Who eats what we grow
+The population of the world is estimated to grow from 8billion today
+to 9.7billion in the year 2050.(fischer et al., 2002).
+The panacea of providing food to these ever growing population has become major 
+concern for FAO, Government, Entrepreneur, and philanthropist. (FAO., 2015)
+
+There are various ways to combat these challenges and some of the ways include;
+Improving on our Agricultural practices as well as adjusting our diets. Things
+gets even more complicated with climate change as it affects food production - 
+Agriculture.
+
+This dataset gives us perspective on the food production worldwide.However,
+our focus in this analysis is based on food/ feed production in the UK from
+2003 - 2013. The question is in line with the article " Who eats the food we grow
+
+Our Question: Which was produced more in the united kingdom between 2003 and 2013
+Food or Feed.
+
+The dataset was from Kaggle.
+
+## 02 Methodology
+
+ The dataset was extracted from kaggel dataset on "Who eat what we grow", 
+ compiled and published by the Food and Agriculture Organization
+ of the united nation.
+ The original dataset consist of Food product data from 1961 to 2013 
+ from 245 countries and territories. The focus of this analysis however, is to 
+ determine which is produced more in the united kingdom between 
+ the period of 2003 to 2013; Feed for animals or food for humans.
+ The logic in this question poses a classification problem and we shall be using
+ logistic regression  to solve the problem; 
+ because dependent variable is either Feed or Food.
+
+```{r}
+# set working directory
+
+setwd("C:/Users/MAYOWA/OneDrive/Desktop/Scripts")
+
+library(openxlsx)
+
+foodfeed_production <- read.xlsx("Feedfoodproduction.xlsx")
+
+sum(is.na(foodfeed_production))
+foodfeed_production <- na.omit(foodfeed_production) #remove missing data
+class <- foodfeed_production[ , 7] #class label
+foodfeed_production2 <- foodfeed_production[ , 53:63]
+foodfeed_production3 <- cbind(class, foodfeed_production2) #combine class label+
+                                                          #descriptorinto same df
+df<- foodfeed_production3
+df$class <- as.factor(df$class)
+
+```
+
+
+```{r}
+#cor() produce matrix that shows the pairwise correlation between the varriable
+
+cor(df[ , -1]) #1st varriable is the class containing food or feed.
+```
+
+
+```{r}
+# We use glm() for logistic regression.
+
+glm.fit<- glm(class ~ Y2003+Y2004+Y2005+Y2006+Y2007+Y2008+Y2009+Y2010+
+                Y2011+Y2012+Y2013, data = df, family = binomial)
+
+summary(glm.fit)
+```
+
+```{r}
+#coef() determine the coefficients of glm.fit
+
+coef(glm.fit)
+```
+
+
+```{r}
+#predict() for probability of producing Food or Feed
+
+glm.prob <- predict(glm.fit, type = "response")
+glm.prob[1:10]
+```
+
+```{r}
+contrasts(df$class)
+```
+
+
+
+```{r}
+#probability of production to be greater or less than 0.8
+
+glm.pred <- rep("Feed", 17938) # make vector
+glm.pred[glm.prob > .8] <- "Food" # add Up values
+
+```
+
+```{r}
+table(glm.pred, df$class) # confusion matrix
+```
+
+
+```{r}
+mean(glm.pred == class) # to determine the proportion of correct prediction
+```
+
+
+```{r}
+set.seed(100)
+train_index <- sample(2,nrow(df), replace = TRUE, prob =c(0.7,0.30)) #training data
+train.data <- df[train_index== 1,]
+df.Y2013 <- df[train_index==2,]
+dim(df.Y2013)
+```
+
+
+```{r}
+class.Y2013 <- class[ train_index==2]
+```
+
+
+
+```{r}
+glm.fit <- glm(class ~ Y2003 +Y2004+Y2005+Y2006+Y2007+Y2008+Y2009+Y2010+
+                Y2011+Y2012+Y2013, data = train.data,
+              family = binomial)
+predict.probs <- predict(glm.fit, df.Y2013, type = "response")
+
+```
+
+
+```{r}
+
+glm.pred <- rep("Feed", 5272)
+glm.pred[predict.probs > .8] <- "Food"
+
+table(glm.pred, class.Y2013)
+```
+
+
+```{r}
+
+mean(glm.pred == class.Y2013)
+
+```
+
+
+```{r}
+mean(glm.pred != class.Y2013)
+```
+
+
+```{r}
+par(mfrow = c(2,2))
+plot(glm.fit)
+```
+
+## 03 Result
+The result of our above analysis shows that 83% of the time, 
+our prediction was correct that more food was produced in the united kingdom
+between the year 2003 and 2013. The test error scores shows 17% which inferred
+that the error in our prediction is low. 
+
+## 04 Conclusion
+We can conclude fro our analysis that more food were produced in 
+the united kingdom in the period in view(2003- 2013). which means that 
+more food were cultivated for human consumption than for animal feed.             
+
+
+## 05 Reference
+
+Fischer, G., Shah, M.M., & van Velthuizen, H.T. (2002). 
+Climate Change and Agricultural Vulnerability.
+IIASA, Laxenburg, Austria.
+
+Food and Agriculture Organization 2015
+UN DESA report, “World Population Prospects"
+New York
+
+Gareth James, Daniela Witten , Trevor Hastie, Robert Tibshirani
+An Introduction to Statistical Learning 
+with Applications in R
+Second Edition
+First printing : August 4, 2021
+
+
